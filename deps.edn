@@ -1,0 +1,19 @@
+{:paths ["resources" "src"]
+ :deps {org.clojure/clojure {:mvn/version "1.10.1"}
+        io.replikativ/datahike {:mvn/version "0.2.0"}
+        me.raynes/fs {:mvn/version "1.4.6"}
+        digest {:mvn/version "1.4.9"}
+
+        parallel {:mvn/version "0.10"}
+        ;; debug
+        org.clojure/tools.trace  {:mvn/version "0.7.10"}}
+
+ :aliases
+ {:test {:extra-paths ["test"]
+         :extra-deps {org.clojure/test.check {:mvn/version "0.10.0"}}}
+  :runner
+  {:extra-deps {com.cognitect/test-runner
+                {:git/url "https://github.com/cognitect-labs/test-runner"
+                 :sha "76568540e7f40268ad2b646110f237a60295fa3c"}}
+   :main-opts ["-m" "cognitect.test-runner"
+               "-d" "test"]}}}
