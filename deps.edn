@@ -1,13 +1,10 @@
 {:paths ["resources" "src"]
  :deps {org.clojure/clojure {:mvn/version "1.10.1"}
-        io.replikativ/datahike {:mvn/version "0.2.0"}
         me.raynes/fs {:mvn/version "1.4.6"}
-        digest {:mvn/version "1.4.9"}
-
         parallel {:mvn/version "0.10"}
-        ;; debug
-        org.clojure/tools.trace  {:mvn/version "0.7.10"}}
-
+        org.lz4/lz4-java  {:mvn/version  "1.7.0"}
+        cli-matic {:mvn/version "0.3.11"}
+        org.clojure/data.json {:mvn/version "0.2.7"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/test.check {:mvn/version "0.10.0"}}}
