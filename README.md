@@ -1,42 +1,47 @@
-# filescan
+# fscan
 
-FIXME: description
+Filescan Tool 
+
+The primary feature of this tool is to locate duplicate files and interactively delete them based on User input.
+
+This is alpha software.
 
 ## Installation
 
-Download from http://example.com/FIXME.
+Installer https://fscan.niklauszbinden.ch
 
+Binary download: 
+
+    $ wget -q https://nickik.keybase.pub/fscan/fscan
+    
 ## Usage
-
-FIXME: explanation
 
 Run the project directly:
 
     $ clj -m nickik.filescan
 
-Run the project's tests (they'll fail until you edit them):
+Build Binary (adjust to your installation)
 
-    $ clj -A:test:runner
+    $ export GRAALVM_HOME=/usr/lib/jvm/graalvm 
+    $ clj -A:cambada:native-image -m nickik.filescan
+    $ ./target/filescan --help
+    
+## CLI Example
 
+    $ fscan --help
+    
 ## Options
 
-FIXME: listing of options this app accepts.
+Everything you need:
+
+    $ fscan --help
 
 ## Examples
 
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
+    $ fscan --help
 
 ## License
 
-Copyright © 2019 FIXME
+Copyright © 2019 Niklaus Zbinden
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Released under MIT License
