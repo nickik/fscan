@@ -13,7 +13,7 @@
 
 (def ^:static xx-seed 4985495)
 
-(def ^XXHashFactory xx-hash-factory (. XXHashFactory fastestInstance))
+(def ^XXHashFactory xx-hash-factory (. XXHashFactory fastestJavaInstance))
 
 (defn  ^FileInputStream file-stream [^java.io.File file]
   (FileInputStream. file))
@@ -49,27 +49,30 @@
 (defn print-return [x]
   (println) x)
 
-(defmacro dbg [body]
-  `(let [x# ~body]
-     (println "dbg:" '~body "=" x#)
-     x#))
-
 (defn paths [patterns {:keys [path-str]}]
   (some identity (map #(re-find (re-pattern %) path-str) patterns)))
 
-(defn to-hash-group [include exclude file-seq]
-  (let [files (->> file-seq
-               (remove f/directory?)
-               (map resolve-file)
-               (remove (partial paths exclude))
-               (filter (partial paths include)))
-        by-hash (p/group-by :hash files)]
-    (map
-     (fn [m]
-       {:count (count m)
-        :paths (mapv :path-str m)
-        :hash  (:hash (first m))})
-     (vals by-hash))))
+(defn resolve-files [include exclude file-seq]
+  (->> file-seq
+       (remove f/directory?)
+       (map resolve-file)
+       (remove (partial paths exclude))
+       (filter (partial paths include))))
+
+(defn enrich-result [m]
+  {:count (count m)
+   :paths (mapv :path-str m)
+   :hash  (:hash (first m))})
+
+(defn hash-path-lst-to-hash-group [hash-path-lst]
+  (->> hash-path-lst
+       (group-by :hash)
+       vals
+       (map enrich-result)))
+
+(defn files-to-hash-group [include exclude file-seq]
+  (-> (resolve-files include exclude file-seq)
+      hash-path-lst-to-hash-group))
 
 (defn more-then-one [hash-group]
   (< 1 (:count hash-group)))
@@ -78,7 +81,7 @@
   (when (more-then-one hash-group)
     (doseq [path-tuple (map-indexed (fn [i path]
                                       [i path]) (:paths hash-group))]
-      (println (first path-tuple) ": " (second path-tuple)))
+      (println "\t" (first path-tuple) ": " (second path-tuple)))
     (println)
     (print "Enter Paths to be removed [Example: 0,1]: ")
     (flush)
@@ -95,20 +98,18 @@
   (clojure.string/split (if csl csl "") #","))
 
 (defn to-hash-groups [paths include exclude]
-  (let [include (parse-comma-lst include)
-        exclude (parse-comma-lst exclude)]
-    (->> paths
-         (map path-to-file-seq)
-         (map #(to-hash-group include exclude %))
-         (apply merge-with-into))))
+  (->> paths
+       (map path-to-file-seq)
+       (map #(files-to-hash-group
+               (parse-comma-lst include)
+               (parse-comma-lst exclude)
+               %))
+       (apply merge-with-into)))
 
-(defn filescan-remove [{:keys [paths interactive include exclude]
-                        :as input}]
+(defn filescan-remove [{:keys [paths interactive include exclude]}]
   (when-not interactive
     (println "Non Interactive Remove is not implemented")
     (System/exit 0))
-
-  (clojure.pprint/pprint input)
   (let [hash-groups (to-hash-groups paths include exclude)
         commands (mapcat user-input-to-cmd hash-groups)]
     (doseq [path (map :path commands)]
@@ -147,8 +148,8 @@
                   :type    :flag
                   :default true}
                  {:option "paths"
-                  :short "p"
                   :as "List of Paths to be scanned"
+                  :short "p"
                   :type :string
                   :default :present
                   :multiple true}
@@ -159,12 +160,10 @@
                   :as "List of Regex for Whitelist [Example: home]"
                   :type :string}]
    :commands    [{:command     "remove"
-                  :short       "d"
                   :description ["Delete duplicate from provided paths"]
                   :opts        []
                   :runs        filescan-remove}
                  {:command     "print"
-                  :short       "p"
                   :description ["Prints duplicate from provided paths (not interactive)"]
                   :opts        [{:option "format" :short "f" :as "Format of Output" :type :keyword :default :human}
                                 {:option "output" :short "o" :as "Location of Output File" :type :string}
@@ -180,9 +179,7 @@
 
     (defn do-bench [path]
       (println "Use XX Hash: ")
-      (time (to-hash-group (path-to-file-seq path))))
+      (time (files-to-hash-group (path-to-file-seq path))))
 
     (do-bench test-path-small))
-
-#_(time)
 
