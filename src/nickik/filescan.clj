@@ -92,7 +92,6 @@
          (handle-user-request! hash-group))))
 
 (defn path-to-file-seq [path]
-  (println path)
   (file-seq (clojure.java.io/file path)))
 
 (def merge-with-into (partial merge-with into))
@@ -118,9 +117,11 @@
         #_(clojure.pprint/pprint hash-groups)
         commands (mapcat user-input-to-cmd hash-groups)
         #_(clojure.pprint/pprint commands)]
+    (if (< 0 (count commands))
+      (println "Removed Files: "))
     (doseq [path (map :path commands)]
-      (println "rm -f" path)
-      #_(f/delete path))))
+      (println "\t" path)
+      (f/delete path))))
 
 (defn print-human-readable [hash-groups]
   (doseq [hg hash-groups]
