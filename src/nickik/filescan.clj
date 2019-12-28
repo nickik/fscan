@@ -2,7 +2,6 @@
   (:gen-class)
   (:require [me.raynes.fs :as f]
             [parallel.core :as p]
-            [cli-matic.core :refer [run-cmd]]
             [clojure.data.json :as json])
   (:import (net.jpountz.xxhash XXHashFactory)
            (java.io FileInputStream)
@@ -49,15 +48,18 @@
 (defn print-return [x]
   (println) x)
 
-(defn paths [patterns {:keys [path-str]}]
-  (some identity (map #(re-find (re-pattern %) path-str) patterns)))
+(defn paths [include exclude {:keys [path-str]}]
+  (let [include-matches (map #(re-find (re-pattern %) path-str) include)
+        _ (println include-matches  )
+        exclude-matches (map #(re-find (re-pattern %) path-str) exclude)
+        _ (println exclude-matches)])
+  false)
 
 (defn resolve-files [include exclude file-seq]
-  (->> file-seq
-       (remove f/directory?)
-       (map resolve-file)
-       (remove (partial paths exclude))
-       (filter (partial paths include))))
+(->> file-seq
+     (remove f/directory?)
+     (p/pmap resolve-file)
+     #_(remove (partial paths include exclude))))
 
 (defn enrich-result [m]
   {:count (count m)
@@ -90,6 +92,7 @@
          (handle-user-request! hash-group))))
 
 (defn path-to-file-seq [path]
+  (println path)
   (file-seq (clojure.java.io/file path)))
 
 (def merge-with-into (partial merge-with into))
@@ -106,12 +109,15 @@
                %))
        (apply merge-with-into)))
 
-(defn filescan-remove [{:keys [paths interactive include exclude]}]
+
+(defn filescan-remove [{:keys [paths interactive include exclude] :as input}]
   (when-not interactive
     (println "Non Interactive Remove is not implemented")
     (System/exit 0))
   (let [hash-groups (to-hash-groups paths include exclude)
-        commands (mapcat user-input-to-cmd hash-groups)]
+        #_(clojure.pprint/pprint hash-groups)
+        commands (mapcat user-input-to-cmd hash-groups)
+        #_(clojure.pprint/pprint commands)]
     (doseq [path (map :path commands)]
       (println "rm -f" path)
       #_(f/delete path))))
@@ -137,8 +143,7 @@
     (binding [*out*  (if output (clojure.java.io/writer output :append append)
                                 *out*)]
       (write-output hash-groups format))))
-
-(def cli-config
+#_(def cli-config
   {:app         {:command     "filescan - fscan"
                  :description "Find and removes duplicate files"
                  :version     "0.0.1"}
@@ -170,8 +175,22 @@
                                 {:option "append" :short "a" :as "Appends to Output File" :type :flag :default :false}]
                   :runs        filescan-print}]})
 
+(defn simple-args-parse [args]
+  {:interactive true
+   :paths args})
+
+(defn print-help []
+  (println "fscan expects a absolute path to a directory as an input!"))
+
 (defn -main [& args]
-  (run-cmd args cli-config))
+  (when (nil? args)
+     (print-help)
+     (System/exit 0))
+  (when (not (f/directory? (first args)))
+    (print-help)
+    (System/exit 0))
+
+  (filescan-remove (simple-args-parse args)))
 
 (comment
     (def test-path-small "/home/nick/Downloads/wnf")

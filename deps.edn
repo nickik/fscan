@@ -1,6 +1,5 @@
 {:paths ["resources" "src"]
- :deps {org.clojure/clojure {:mvn/version "1.9.0"}
-        cli-matic {:mvn/version "0.3.11"}
+ :deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.lz4/lz4-java  {:mvn/version  "1.7.0"}
         com.fzakaria/slf4j-timbre {:mvn/version "0.3.17"}
         me.raynes/fs {:mvn/version "1.4.6"}
@@ -20,7 +19,7 @@
   :native-image  {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.2"}}
                   :main-opts ["-m" "cambada.native-image"
                               "-m" "nickik.filescan"
-                              "--graalvm-opt" "H:+TraceClassInitialization"]}
+                              "--graalvm-home " "/usr/lib/jvm/graalvm"]}
 
   :uberjar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.2"}}
             :main-opts ["-m" "cambada.uberjar"
